@@ -14,9 +14,6 @@ from app.logger import logger
 from app.patient.model import Patient
 from app.patient.schemas import SPatientCreate, SPatientUpdate
 
-NOT_FOUND = HTTPException(404, "Item not found")
-
-
 class PatientDAO(BaseDAO[Patient, SPatientCreate, SPatientUpdate]):
     model = Patient
 

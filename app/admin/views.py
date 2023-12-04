@@ -36,8 +36,8 @@ class ChatsAdmin(ModelView, model=Chat):
     icon = "fa-solid fa-comments"
 
 
-class MessagesAdmin(ModelView, model=Chat):
-    column_list = [Message.id, Message.chat, Message.sender, Message.content, Message.timestamp]
+class MessagesAdmin(ModelView, model=Message):
+    column_list = [Message.id, Message.chat, Message.sender, Message.content, Message.is_read, Message.timestamp]
     name = "Сообщение"
     name_plural = "Сообщения"
     icon = "fa-solid fa-comment"
