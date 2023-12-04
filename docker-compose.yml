@@ -1,0 +1,87 @@
+# docker compose build - используем эту команду, если меняли что-то в Dockerfile
+# docker compose up - если изменили только docker-compose
+
+# ports: наружный порт - внутренний порт
+
+version: "3"
+services:
+  db:
+    image: postgres:latest
+    container_name: chat_db
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    env_file:
+      - .env-non-dev
+    ports:
+      - 5432:5432
+
+  redis:
+    image: redis:latest
+    container_name: chat_redis
+
+  chat:
+    image: chat_app
+    build:
+      context: .
+    container_name: chat_app
+    env_file:
+      - .env-non-dev
+    depends_on:
+      - db
+      - redis
+    # Если не работает эта команда, используйте закомментированную
+    command: ["/chat/docker/app.sh"]
+    ports:
+      - 7777:8000
+
+  celery:
+    image: chat_celery
+    build:
+      context: . # celery это библиотека, у неё нет образа, берём из основного билда
+    container_name: chat_celery
+    # Если не работает эта команда, используйте закомментированную
+    command: ["/chat/docker/celery.sh", "celery"] # Второй аргумен для if/elif в скрипте
+    #command: sh -c "celery --app=app.tasks.celery:celery worker -l INFO"
+    env_file:
+      - .env-non-dev
+    depends_on:
+      - redis
+
+  flower:
+    image: chat_flower
+    build:
+      context: . # flower это библиотека, у неё нет образа, берём из основного билда
+    container_name: chat_flower
+    # Если не работает эта команда, используйте закомментированную
+    command: ["/chat/docker/celery.sh", "flower"]
+    #command: sh -c "celery --app=app.tasks.celery:celery flower"
+    env_file:
+      - .env-non-dev
+    depends_on:
+      - redis
+    ports:
+      - 5555:5555
+
+  prometheus:
+    image: prom/prometheus:v2.43.0
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheusdata:/prometheus
+    restart: unless-stopped
+    ports:
+      - 9090:9090
+
+  grafana:
+    image: grafana/grafana:9.4.7
+    container_name: grafana
+    volumes:
+      - grafanadata:/var/lib/grafana
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+      
+volumes:
+  postgresdata:
+  grafanadata:
+  prometheusdata:
