@@ -10,26 +10,12 @@ from app.tasks.email_templates import create_chat_confirmation_template
 from app.logger import logger
 
 
-@celery.task
-def process_pic(
-    path: str,
-):
-    im_path = Path(path)
-    im = Image.open(im_path)
-    for width, height in [
-        (1000, 500),
-        (200, 100)
-    ]:
-        resized_img = im.resize(size=(width, height))
-        resized_img.save(f"app/static/images/resized_{width}_{height}_{im_path.name}")
-
-
 # @celery.task  # Раскомментировать, если нужен celery вместо BackgroundTasks 
 def send_chat_confirmation_email(
     chat: dict,
     email_to: EmailStr,
 ):
-    # Удалите строчку ниже для отправки сообщения на свой email, а на пользовательский
+    # Удалить строчку ниже для отправки сообщения на свой email, а на пользовательский
     email_to = settings.SMTP_USER
     msg_content = create_chat_confirmation_template(chat, email_to)
 
@@ -37,3 +23,17 @@ def send_chat_confirmation_email(
         server.login(settings.SMTP_USER, settings.SMTP_PASS)
         server.send_message(msg_content)
     logger.info(f"Successfully send email message to {email_to}")
+
+
+# @celery.task
+# def process_pic(
+#     path: str,
+# ):
+#     im_path = Path(path)
+#     im = Image.open(im_path)
+#     for width, height in [
+#         (1000, 500),
+#         (200, 100)
+#     ]:
+#         resized_img = im.resize(size=(width, height))
+#         resized_img.save(f"app/static/images/resized_{width}_{height}_{im_path.name}")

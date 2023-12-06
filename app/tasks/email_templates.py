@@ -18,7 +18,6 @@ def create_chat_confirmation_template(
     email.set_content(
         f"""
             <h1>Подтвердите регистрацию</h1>
-            Вы с {chat["date_from"]} по {chat["date_to"]}
         """,
         subtype="html"
     )

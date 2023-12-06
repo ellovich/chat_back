@@ -36,8 +36,6 @@ class Doctor(BaseAlchemyModel, MainModel):
 
     medical_institution = Column(String, nullable=True)
     jobTitle = Column(String, nullable=True)
-    education = Column(JSONB, nullable=False)
-    career = Column(JSONB, nullable=True)
 
 
     def __str__(self) -> str:

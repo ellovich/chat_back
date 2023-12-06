@@ -4,6 +4,7 @@ from app.patient.model import Patient
 from app.user.model import User
 from sqladmin import ModelView
 
+
 class UsersAdmin(ModelView, model=User):
     column_list = [User.id, User.email]
     column_details_exclude_list = [User.hashed_password]
@@ -41,4 +42,3 @@ class MessagesAdmin(ModelView, model=Message):
     name = "Сообщение"
     name_plural = "Сообщения"
     icon = "fa-solid fa-comment"
-

@@ -19,25 +19,6 @@ router = SQLAlchemyCRUDRouter(
     dependencies=[Depends(current_active_user)]     
 )
 
-@router.get("/{id}/patients")
-async def get_doctor_patients(id: int) -> list[SPatientRead]:
-    return await DoctorDAO.get_doctor_patients(doctor_id=id)
-
-# @router.post("/add")
-# async def add_doctor(doctor: SDoctorCreate,
-#                      user = Depends(current_active_user)): # -> SDoctor
-#     await DoctorDAO.add(
-#         first_name = doctor.first_name,
-#         middle_name = doctor.middle_name,
-#         last_name = doctor.last_name,
-
-#         gender = doctor.gender,
-#         birth = doctor.birth,
-#         image_path = doctor.image_path,
-
-#         medical_institution =doctor.medical_institution,
-#         jobTitle = doctor.jobTitle,
-#         contacts = doctor.contacts,
-#         education = doctor.education,
-#         career = doctor.career,
-#     )
+# @router.get("/{id}/patients")
+# async def get_doctor_patients(id: int) -> list[SPatientRead]:
+#     return await DoctorDAO.get_doctor_patients(doctor_id=id)

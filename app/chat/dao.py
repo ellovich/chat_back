@@ -62,5 +62,6 @@ class ChatDAO(BaseDAO[Chat, SChatCreate, SChatUpdate]):
 
         return chat_list
 
+
 class MessageDAO(BaseDAO[Message, SMessageCreate, SMessageUpdate]):
     model = Message

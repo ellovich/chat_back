@@ -4,10 +4,9 @@ from app.admin.views import ChatsAdmin, DoctorsAdmin, MessagesAdmin, PatientsAdm
 import sentry_sdk
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+# from fastapi.staticfiles import StaticFiles
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
 from redis import asyncio as aioredis
 from sqladmin import Admin
@@ -64,10 +63,10 @@ app.add_middleware(
     CORSMiddleware,
    # allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS", "DELETE", "PATCH", "PUT"],
-    allow_headers=["Content-Type", "Set-Cookie", "Access-Control-Allow-Headers", 
-                   "Access-Control-Allow-Origin",
-                   "Authorization"],
+    # allow_methods=["GET", "POST", "OPTIONS", "DELETE", "PATCH", "PUT"],
+    # allow_headers=["Content-Type", "Set-Cookie", "Access-Control-Allow-Headers", 
+    #                "Access-Control-Allow-Origin",
+    #                "Authorization"],
 )
 
 app.include_router(router_pages)
@@ -101,7 +100,7 @@ admin.add_view(ChatsAdmin)
 admin.add_view(MessagesAdmin)
 
 
-app.mount("/static", StaticFiles(directory="app/static"), "static")
+#app.mount("/static", StaticFiles(directory="app/static"), "static")
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):

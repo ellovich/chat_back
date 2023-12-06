@@ -19,6 +19,6 @@ router = SQLAlchemyCRUDRouter(
     dependencies=[Depends(current_active_user)]
 )
 
-@router.get("/{id}/doctors")
-async def get_patinet_doctors(id: int) -> list[SDoctor]:
-    return await PatientDAO.get_all_doctors(id)
+# @router.get("/{id}/doctors")
+# async def get_patinet_doctors(id: int) -> list[SDoctor]:
+#     return await PatientDAO.get_all_doctors(id)

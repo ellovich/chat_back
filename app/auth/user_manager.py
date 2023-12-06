@@ -29,7 +29,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
             await PatientDAO.add(user_id=user.id, attribs=[])
         elif user.type == "doctor":
             await DoctorDAO.add(user_id=user.id, education=[])
-        logger.info(f"User {user.id} has registered.")
+        logger.info(f"User {user.id} ({user.type}) has registered.")
 
     async def on_after_forgot_password(
         self, user: User, token: str, request: Optional[Request] = None
