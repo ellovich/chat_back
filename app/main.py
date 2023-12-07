@@ -9,7 +9,7 @@ from redis import asyncio as aioredis
 from sqladmin import Admin
 import sentry_sdk
 
-from app.admin.views import ChatsAdmin, DoctorsAdmin, MessagesAdmin, PatientsAdmin, UsersAdmin
+from app.admin.views import ChatsAdmin, DoctorsAdmin, MessagesAdmin, PatientsAdmin, UsersAdmin, AccessTokenAdmin
 from app.chat.router import router as router_chats
 from app.config import settings
 from app.database import engine
@@ -91,6 +91,7 @@ instrumentator.instrument(app).expose(app)
 # Подключение админки
 admin = Admin(app, engine)#, authentication_backend=authentication_backend)
 admin.add_view(UsersAdmin)
+admin.add_view(AccessTokenAdmin)
 admin.add_view(PatientsAdmin)
 admin.add_view(DoctorsAdmin)
 admin.add_view(ChatsAdmin)

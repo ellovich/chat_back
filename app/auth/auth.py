@@ -1,23 +1,24 @@
+from fastapi import Depends
 from fastapi_users import FastAPIUsers
-from fastapi_users.authentication import AuthenticationBackend, CookieTransport, JWTStrategy, BearerTransport
+from fastapi_users.authentication import AuthenticationBackend, BearerTransport
+from fastapi_users.authentication.strategy.db import AccessTokenDatabase, DatabaseStrategy
 
 from app.auth.user_manager import get_user_manager
-from app.config import settings
-from app.user.model import User
+from app.user.dependencies import get_access_token_db
+from app.user.model import AccessToken, User
 
-#cookie_transport = CookieTransport(cookie_max_age=36000)
+
 bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
-
-def get_jwt_strategy() -> JWTStrategy:
-    return JWTStrategy(secret=settings.SECRET_KEY, lifetime_seconds=36000)
-
+def get_database_strategy(
+    access_token_db: AccessTokenDatabase[AccessToken] = Depends(get_access_token_db)
+) -> DatabaseStrategy:
+    return DatabaseStrategy(access_token_db, lifetime_seconds=360000)
 
 auth_backend = AuthenticationBackend(
     name="jwt",
-    #transport=cookie_transport,
     transport=bearer_transport,
-    get_strategy=get_jwt_strategy,
+    get_strategy=get_database_strategy,
 )
 
 fastapi_users = FastAPIUsers[User, int](get_user_manager, [auth_backend])

@@ -11,10 +11,10 @@ from sqlalchemy import engine_from_config, pool
 
 from app.config import settings
 from app.database import BaseAlchemyModel
-from app.doctor.model import Doctor #, doctor_patient_association
+from app.doctor.model import Doctor 
 from app.patient.model import Patient
-from app.user.model import User
-from app.chat.model import Chat #Chat, Chat
+from app.user.model import User, AccessToken
+from app.chat.model import Chat, Attachment, Message
 
 
 # this is the Alembic Config object, which provides

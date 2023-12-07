@@ -1,17 +1,24 @@
 from app.chat.model import Chat, Message
 from app.doctor.model import Doctor
 from app.patient.model import Patient
-from app.user.model import User
+from app.user.model import AccessToken, User
 from sqladmin import ModelView
 
 
 class UsersAdmin(ModelView, model=User):
-    column_list = [User.id, User.email]
+    column_list = [User.id, User.email, User.access_tokens]
     column_details_exclude_list = [User.hashed_password]
     can_delete = False
     name = "Пользователь"
     name_plural = "Пользователи"
     icon = "fa-solid fa-user"
+
+
+class AccessTokenAdmin(ModelView, model=AccessToken):
+    column_list = [AccessToken.id, AccessToken.user, AccessToken.token, AccessToken.created_at]
+    name = "Токен"
+    name_plural = "Токены"
+    icon = "fa-solid fa-key"
 
 
 class PatientsAdmin(ModelView, model=Patient):

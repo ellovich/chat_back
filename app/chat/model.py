@@ -7,6 +7,7 @@ from app.database import BaseAlchemyModel, MainModel
 
 class Chat(BaseAlchemyModel):
     __tablename__ = 'chat'
+    id = Column(Integer, primary_key=True, nullable=False, index=True, unique=True)
 
     doctor_user_id = Column(Integer, ForeignKey('doctor.user_id'))
     doctor = relationship('Doctor', back_populates='chat')
@@ -19,8 +20,8 @@ class Chat(BaseAlchemyModel):
 
 class Message(BaseAlchemyModel):
     __tablename__ = 'message'
+    id = Column(Integer, primary_key=True, nullable=False, index=True, unique=True)
 
-    id = Column(Integer, primary_key=True, index=True)
     content = Column(String, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)
     is_read = Column(Boolean, nullable=False)
@@ -46,8 +47,8 @@ class Message(BaseAlchemyModel):
 
 class Attachment(BaseAlchemyModel):
     __tablename__ = 'attachment'
+    id = Column(Integer, primary_key=True, nullable=False, index=True, unique=True)
 
-    id = Column(Integer, primary_key=True, index=True)
     file_path = Column(String, nullable=False)
     message_id = Column(Integer, ForeignKey('message.id'))
     message = relationship('Message', back_populates='attachments')

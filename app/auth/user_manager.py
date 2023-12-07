@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import Depends, Request, Response
 from fastapi_users import BaseUserManager, IntegerIDMixin
-from fastapi_users.db import SQLAlchemyUserDatabase
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 
 from app.config import settings
 from app.doctor.dao import DoctorDAO

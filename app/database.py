@@ -25,9 +25,8 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 class BaseAlchemyModel(DeclarativeBase):
-    #pass
-    id = Column(Integer, primary_key=True, nullable=False, index=True, unique=True)
-
+    pass
+    #id = Column(Integer, primary_key=True, nullable=False, index=True, unique=True)
 
 class MainModel:
     created_on = Column(DateTime, default=datetime.now())
