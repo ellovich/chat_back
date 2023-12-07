@@ -4,17 +4,26 @@
     <script>
         async function registerUser() {
             const url = "http://localhost:8000/auth/register";
-            const formData = new FormData();
-            formData.append('email', document.getElementById("email").value);
-            formData.append('password', document.getElementById("password").value);
-            formData.append('type', document.getElementById("type").value);
+            const data = {
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value,
+                is_active: true,
+                is_superuser: false,
+                is_verified: false,
+                type: document.getElementById("type").value,
+                phone_number: "",
+                image_path: ""
+            };
 
             await fetch(url, {
                 method: 'POST',
-                body: formData,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data),
             }).then(response => {
                 if (response.status === 201) {
-                    window.location.href = "/pages/login"
+                    window.location.href = "/pages/login";
                 }
             });
         }
@@ -23,26 +32,26 @@
 
 {% block content %}
     <div class="flex flex-col items-center justify-center h-screen">
-            <span class="font-bold text-3xl mb-10">🩺 МойДоктор</span>
+        <span class="font-bold text-3xl mb-10 text-green-400">🩺 МойДоктор</span>
 
         <div>
             <div class="flex flex-col items-start text-xl mb-5">
 
                 <label for="fruit">Кто вы</label>
-                <select title="type" class="border-b-2 border-yellow-400" id="type" name="type">
+                <select title="type" class="border-b-2 border-green-400 " id="type" name="type">
                     <option value="doctor">Пациент</option>
                     <option value="patient">Врач</option>
                 </select>
 
                 <label for="email" class="mb-1">Email</label>
-                <input class="border-b-2 border-yellow-400 mb-4" id="email" name="email" type="text" value="" placeholder="test@mail.ru">
+                <input class="border-b-2 border-green-400 mb-4" id="email" name="email" type="text" value="" placeholder="test@mail.ru">
 
                 <label for="password" class="mb-1">Пароль</label>
-                <input class="border-b-2 border-yellow-400" id="password" name="password" type="password" value="" placeholder="********">
+                <input class="border-b-2 border-green-400" id="password" name="password" type="password" value="" placeholder="********">
                 <span id="wrong_credentials" class="text-sm text-red-400"></span>
             </div>
         </div>
-        <button onclick="registerUser()" class="text-xl bg-yellow-400 px-3 py-2 rounded-3xl mb-3">Зарегистрироваться</button>
+        <button onclick="registerUser()" class="text-xl bg-green-400 px-3 py-2 rounded-3xl mb-3">Зарегистрироваться</button>
         <span>
             Уже зарегистрированы?
             <a href="/pages/login"

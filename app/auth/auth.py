@@ -1,11 +1,12 @@
 from fastapi_users import FastAPIUsers
-from fastapi_users.authentication import AuthenticationBackend, CookieTransport, JWTStrategy
+from fastapi_users.authentication import AuthenticationBackend, CookieTransport, JWTStrategy, BearerTransport
 
 from app.auth.user_manager import get_user_manager
 from app.config import settings
 from app.user.model import User
 
-cookie_transport = CookieTransport(cookie_max_age=36000)
+#cookie_transport = CookieTransport(cookie_max_age=36000)
+bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
 
 def get_jwt_strategy() -> JWTStrategy:
@@ -14,7 +15,8 @@ def get_jwt_strategy() -> JWTStrategy:
 
 auth_backend = AuthenticationBackend(
     name="jwt",
-    transport=cookie_transport,
+    #transport=cookie_transport,
+    transport=bearer_transport,
     get_strategy=get_jwt_strategy,
 )
 

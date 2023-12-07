@@ -26,9 +26,9 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
         if user.type == "patient":
-            await PatientDAO.add(user_id=user.id, attribs=[])
+            await PatientDAO.add(user_id=user.id)
         elif user.type == "doctor":
-            await DoctorDAO.add(user_id=user.id, education=[])
+            await DoctorDAO.add(user_id=user.id)
         logger.info(f"User {user.id} ({user.type}) has registered.")
 
     async def on_after_forgot_password(

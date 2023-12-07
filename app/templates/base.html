@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
@@ -22,22 +23,18 @@
     {% block head %}{% endblock %}
     <title>МойДоктор</title>
 </head>
+
 <body>
-<nav class="mb-10">
-    <div class="flex justify-between px-8 py-3 text-2xl">
-      <ul>
-        <!-- Да, тут захардкожены значения. Я знаю :D -->
-        <!-- <li><a href="/pages/hotels/Алтай?date_to=2024-05-01&date_from=2024-04-17">🏩 МойДоктор</a></li> -->
-      </ul>
-      <ul class="flex gap-x-5">
-        <li><a href="/pages/chat">Мои сообщения</a></li>
-        <li>
-            <button onclick="logoutUser()">Выйти</button>
-        </li>
-      </ul>
-    </div>
-    <hr/>
-</nav>
-{% block content %}{% endblock %}
-</body>
+    <nav class="mb-10 bg-green-400">
+      <div class="flex justify-between items-center px-8 py-3 text-2xl text-white">
+        <ul class="flex gap-x-5">
+          <li><a href="/pages/chat">Мои сообщения</a></li>
+        </ul>
+        <button onclick="logoutUser()">Выйти</button>
+      </div>
+      <hr/>
+    </nav>
+    {% block content %}{% endblock %}
+  </body>
+
 </html>
