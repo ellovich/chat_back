@@ -5,9 +5,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import joinedload
 from sqlalchemy import and_, desc, func, insert, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.chat.dao import ChatDAO, MessageDAO
 from app.logger import logger
-
 from app.chat.model import Chat, Message
 from app.chat.schemas import SChatCreate, SChatForList, SMessageUpdate, SChatUpdate, SChat, SMessage
 from app.database import async_session_maker, get_async_session
@@ -124,23 +124,13 @@ async def read_chat(id: int, current_user: User = Depends(current_active_user)):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
+        logger.warning(f"CONNECTED {websocket}")
         self.active_connections.append(websocket)
 
     def disconnect(self, websocket: WebSocket):
@@ -149,13 +139,11 @@ class ConnectionManager:
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
 
-    async def broadcast(self, message: str, sender_id: int, recipient_id: int):
-        if message:
-            await self.add_message_to_database(message, sender_id, recipient_id)
-
+    async def broadcast(self, message: str, add_to_db: bool):
+        if add_to_db:
+            await self.add_messages_to_database(message)
         for connection in self.active_connections:
-            if recipient_id == connection.scope.get("user_id"):
-                await self.send_personal_message(message, connection)
+            await connection.send_text(message)
 
     @staticmethod
     async def add_message_to_database(message: str, sender_id: int, recipient_id: int):
@@ -172,44 +160,15 @@ class ConnectionManager:
             await session.commit()
 
 
-
 manager = ConnectionManager()
 
-# @router.websocket("/ws/{client_id}/{recipient_id}")
-# async def websocket_endpoint(websocket: WebSocket, client_id: int, recipient_id: int):
-#     await manager.connect(websocket)
-#     try:
-#         while True:
-#             data = await websocket.receive_text()
-#             await manager.send_personal_message(
-#                 f"User #{client_id} says: {data}",
-#                 websocket
-#             )
-#     except WebSocketDisconnect:
-#         manager.disconnect(websocket)
-#         await manager.send_personal_message(
-#             f"User #{client_id} left the chat",
-#             websocket
-#         )
-
-
-# connected_users = {}
-
-# @router.websocket("/ws/{user_id}")
-# async def websocket_endpoint(user_id: str, websocket: WebSocket):
-#     await websocket.accept()
-
-#     # Store the WebSocket connection in the dictionary
-#     connected_users[user_id] = websocket
-
-#     try:
-#         while True:
-#             data = await websocket.receive_text()
-#             # Send the received data to the other user
-#             for user, user_ws in connected_users.items():
-#                 if user != user_id:
-#                     await user_ws.send_text(data)
-#     except:
-#         # If a user disconnects, remove them from the dictionary
-#         del connected_users[user_id]
-#         await websocket.close()
+@router.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: int):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.broadcast(f"Client #{client_id} says: {data}", add_to_db=True)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+        await manager.broadcast(f"Client #{client_id} left the chat", add_to_db=False)

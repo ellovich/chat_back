@@ -10,15 +10,43 @@
     <script>
         async function logoutUser() {
             const url = "http://localhost:8000/auth/logout";
-
-            await fetch(url, {
-                method: 'POST',
-            }).then(response => {
+            await fetch(
+                url, {
+                    method: 'POST', 
+                }
+            ).then(response => {
                 if (response.status === 200 | response.status === 401) {
                     window.location.href = "/pages/login"
                 }
             });
         }
+
+        async function get_me() {
+            const url = "http://localhost:8000/users/me";
+            const token = "NxMymoQsrZ7YMmpXrYKbRffeQ5MLf3YRzAnLIEPGc2Y";
+
+            await fetch(url, {
+                method: 'GET',  // Используйте GET, так как вы хотите получить данные о пользователе
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).then(async response => {
+                if (response.status === 200) {
+                    const userData = await response.json();
+                    const usernameElement = document.getElementById('username');
+                    if (usernameElement) {
+                        usernameElement.textContent = userData.name;
+                    }
+                } else if (response.status === 401) {
+                    // Обработка случая, когда пользователь не аутентифицирован
+                    console.log('User not authenticated');
+                }
+            });
+        }
+
+        // Загрузка списка чатов при загрузке страницы
+        window.onload = function () {
+            get_me();
+        }
+
     </script>
     {% block head %}{% endblock %}
     <title>МойДоктор</title>
@@ -29,13 +57,13 @@
       <div class="flex justify-between items-center px-8 py-3 text-2xl text-white">
         <ul class="flex gap-x-5">
           <li><a href="/pages/chats">Мои чаты</a></li>
-          <li><a href="/pages/chat">Чат №4</a></li>
         </ul>
-        <button onclick="logoutUser()">Выйти</button>
+          <span id="username"></span>
+          <button onclick="logoutUser()">Выйти</button>
       </div>
       <hr/>
     </nav>
     {% block content %}{% endblock %}
-  </body>
+</body>
 
 </html>

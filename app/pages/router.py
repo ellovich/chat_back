@@ -25,8 +25,9 @@ async def get_register_page(request: Request):
     return templates.TemplateResponse("auth/register.html", {"request": request})
 
 
-@router.get("/chat", response_class=HTMLResponse)
+@router.get("/chat/{id}", response_class=HTMLResponse)
 async def get_chat_page(
+    id: int,
     request: Request,
     #chat=Depends(get_chats),
 ):
@@ -36,6 +37,7 @@ async def get_chat_page(
         "chat/chat.html",
         {
             "request": request,
+            "chat_id": id,
             "headers": {
                 "Authorization": "Bearer ${token}"
             },

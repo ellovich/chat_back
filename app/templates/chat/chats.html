@@ -10,7 +10,7 @@
 <script>
     // Отображение списка чатов
     async function displayChatList() {
-        const token = "rXmdWsHzsAN4SMoI6AejNZYg5RT7tAhQTb0qo7Nj-4o";
+        const token = "NxMymoQsrZ7YMmpXrYKbRffeQ5MLf3YRzAnLIEPGc2Y";
         const chatListUrl = 'http://localhost:8000/chats';  // Замените на ваш эндпоинт
         const chatListResponse = await fetch(chatListUrl, {
             headers: {
@@ -26,6 +26,7 @@
             const content = chat.last_message ? chat.last_message.content : "Сообщений нет";
             const isread = chat.last_message ? chat.last_message.is_read : false;
 
+            const chat_id = 4;
             const img_src = "http://localhost:8000/static/images/" + chat.other_user_image;
 
             const chatItem = document.createElement('li');
@@ -46,9 +47,15 @@
                     </div>
                 </div>
             `;
+
+            // Добавление обработчика клика на элемент чата
+            chatItem.addEventListener('click', () => {
+                // Переход на страницу чата с использованием id чата
+                window.location.href = `http://localhost:8000/pages/chat/${chat_id}`;
+            });
+
             chatListElement.appendChild(chatItem);
         });
-        
     }
 
     // Загрузка списка чатов при загрузке страницы
