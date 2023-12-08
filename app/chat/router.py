@@ -175,43 +175,41 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@router.websocket("/ws/{client_id}/{recipient_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int, recipient_id: int):
-    await manager.connect(websocket)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            await manager.send_personal_message(
-                f"User #{client_id} says: {data}",
-                websocket
-            )
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-        await manager.send_personal_message(
-            f"User #{client_id} left the chat",
-            websocket
-        )
+# @router.websocket("/ws/{client_id}/{recipient_id}")
+# async def websocket_endpoint(websocket: WebSocket, client_id: int, recipient_id: int):
+#     await manager.connect(websocket)
+#     try:
+#         while True:
+#             data = await websocket.receive_text()
+#             await manager.send_personal_message(
+#                 f"User #{client_id} says: {data}",
+#                 websocket
+#             )
+#     except WebSocketDisconnect:
+#         manager.disconnect(websocket)
+#         await manager.send_personal_message(
+#             f"User #{client_id} left the chat",
+#             websocket
+#         )
 
 
+# connected_users = {}
 
+# @router.websocket("/ws/{user_id}")
+# async def websocket_endpoint(user_id: str, websocket: WebSocket):
+#     await websocket.accept()
 
-connected_users = {}
+#     # Store the WebSocket connection in the dictionary
+#     connected_users[user_id] = websocket
 
-@router.websocket("/ws/{user_id}")
-async def websocket_endpoint(user_id: str, websocket: WebSocket):
-    await websocket.accept()
-
-    # Store the WebSocket connection in the dictionary
-    connected_users[user_id] = websocket
-
-    try:
-        while True:
-            data = await websocket.receive_text()
-            # Send the received data to the other user
-            for user, user_ws in connected_users.items():
-                if user != user_id:
-                    await user_ws.send_text(data)
-    except:
-        # If a user disconnects, remove them from the dictionary
-        del connected_users[user_id]
-        await websocket.close()
+#     try:
+#         while True:
+#             data = await websocket.receive_text()
+#             # Send the received data to the other user
+#             for user, user_ws in connected_users.items():
+#                 if user != user_id:
+#                     await user_ws.send_text(data)
+#     except:
+#         # If a user disconnects, remove them from the dictionary
+#         del connected_users[user_id]
+#         await websocket.close()

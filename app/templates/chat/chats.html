@@ -26,15 +26,14 @@
             const content = chat.last_message ? chat.last_message.content : "Сообщений нет";
             const isread = chat.last_message ? chat.last_message.is_read : false;
 
-            const img_name = chat.other_user_image;
+            const img_src = "http://localhost:8000/static/images/" + chat.other_user_image;
 
             const chatItem = document.createElement('li');
             chatItem.innerHTML = `
                 <div class="flex items-center mb-2 justify-between">
                     <div class="flex items-center">
 
-                        <img src="{url_for('static', {'path': 'images/' + img_name})}" alt="Фото" class="w-10 h-10 rounded-full mr-2">
-                        <p>${img_name}</p>
+                        <img src=${img_src} alt="Фото" class="w-10 h-10 rounded-full mr-2">
 
                         <div>
                             <h4 class="font-bold">${chat.other_user_name}</h4>
