@@ -2,7 +2,7 @@ from datetime import date
 import json
 from fastapi import HTTPException
 
-from sqlalchemy import and_, desc, func, insert, or_, select, update
+from sqlalchemy import and_, desc, func, insert, or_, select, update, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -12,51 +12,103 @@ from app.chat.schemas import SChatCreate, SChatForList, SChatUpdate, SMessage, S
 from app.database import async_session_maker, engine
 from app.logger import logger
 from app.chat.model import Message
+from app.user.model import User
 
 
 class ChatDAO(BaseDAO[Chat, SChatCreate, SChatUpdate]):
     model = Chat
 
     @classmethod
-    async def get_chats_by_user(cls, user_id: int) :#-> list[SChatForList]:
-        # Подзапрос для получения максимального timestamp для каждого чата
-        subquery = (
-            select(Message.chat_id, func.max(Message.timestamp).label("max_timestamp"))
-            .group_by(Message.chat_id)
-            .alias("subquery")
-        )
-
-        # Основной запрос для получения чатов пользователя с последними сообщениями
-        query = (
-            select(Chat, Message.content, Message.timestamp, Message.is_read)
-            .join(subquery, Chat.id == subquery.c.chat_id)
-            .outerjoin(Message, and_(Chat.id == Message.chat_id, Message.timestamp == subquery.c.max_timestamp))
-            .filter(or_(Chat.doctor_user_id == user_id, Chat.patient_user_id == user_id))
-            .order_by(desc(subquery.c.max_timestamp))
-        )
-
+    async def get_chats_list_by_user_id(cls, user_id: int) -> list[SChatForList]:
         async with async_session_maker() as session:
-            result = await session.execute(query)
-            chats_with_messages = result.scalars().all()
+            # Получим чаты, где текущий пользователь является user1 или user2
+            stmt = select(Chat).filter((Chat.user1_id == user_id) | (Chat.user2_id == user_id))
+            result = await session.execute(stmt)
+            user_chats = result.scalars().all()
 
-        # Преобразование результатов в список словарей
-        chat_list = [
-            {
-                "chat_id": chat.id,
-                "doctor_id": chat.doctor_user_id,
-                "patient_id": chat.patient_user_id,
-                "last_message": {
-                    "id": message.id if message else None,
-                    "content": message.content if message else None,
-                    "timestamp": message.timestamp if message else None,
-                    "sender_id": message.sender_id if message else None,
-                    "is_read": message.is_read if message else None,
-                },
-            }
-            for chat, message in chats_with_messages
-        ]
+            chat_list = []
+            for chat in user_chats:
+                # Определите user_id собеседника
+                interlocutor_id = chat.user2_id if chat.user1_id == user_id else chat.user1_id
+                interlocutor = await session.get(User, interlocutor_id)
 
-        return chat_list or []  # Вернем пустой список, если чаты не найдены
+                stmt = text(
+                    """
+                    SELECT * FROM message
+                    WHERE chat_id = :chat_id
+                    ORDER BY timestamp DESC
+                    LIMIT 1
+                    """
+                ).bindparams(chat_id=chat.id)
+                result = await session.execute(stmt)
+                last_message = result.first()
+
+                chat_data = SChatForList(
+                    chat_id=chat.id,
+                    other_user_id=interlocutor.id,
+                    other_user_name=interlocutor.name,
+                    other_user_image=interlocutor.image_path,
+                    last_message=SMessage(
+                        id=last_message.id if last_message else None,
+                        content=last_message.content if last_message else None,
+                        chat_id=last_message.chat_id if last_message else None,
+                        timestamp=last_message.timestamp if last_message else None,
+                        sender_id=last_message.sender_id if last_message else None,
+                        is_read=last_message.is_read if last_message else None,
+                    ) if last_message else None
+                )
+                
+                chat_list.append(chat_data)
+
+        return chat_list
+
+
+    @classmethod
+    async def chat_exists(cls, user1_id: int, user2_id: int):
+        async with async_session_maker() as session:
+            # Проверим, существует ли уже чат между указанными пользователями
+            stmt = (
+                select(Chat)
+                .filter(
+                    ((Chat.user1_id == user1_id) & (Chat.user2_id == user2_id)) |
+                    ((Chat.user1_id == user2_id) & (Chat.user2_id == user1_id))
+                )
+            )
+            existing_chat = (await session.execute(stmt)).scalars().first()
+
+            return existing_chat
+    
+
+    @classmethod
+    async def chat_exists_by_id(cls, chat_id: int) -> Chat:
+        async with async_session_maker() as session:
+            stmt = (
+                select(Chat)
+                .where(Chat.id == chat_id)
+            )
+            existing_chat = (await session.execute(stmt)).scalars().first()
+
+            return existing_chat is not None
+
+
+    @classmethod
+    async def get_massages(cls, chat_id: int, count: int = 20):
+        async with async_session_maker() as session:
+
+            stmt = (
+                select(Message)
+                .options(
+                    selectinload(Message.attachments)
+                )
+                .where(Message.chat_id == chat_id)
+                .order_by(Message.timestamp)
+                .limit(count)
+            )
+
+            result = await session.execute(stmt)
+            messages = result.scalars().all()
+
+        return messages
 
 
 class MessageDAO(BaseDAO[Message, SMessageCreate, SMessageUpdate]):

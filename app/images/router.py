@@ -6,10 +6,10 @@ from app.tasks.tasks import process_pic
 
 router = APIRouter(
     prefix="/images",
-    tags=["Загрузка картинок"]
+    tags=["Images"]
 )
 
-@router.post("/")
+@router.post("")
 async def add_image(name: int, file: UploadFile):
     im_path = f"app/static/images/{name}.webp"
     with open(im_path, "wb+") as file_object:

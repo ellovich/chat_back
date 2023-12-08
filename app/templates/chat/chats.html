@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-gray-100 h-screen">
+    <div class="container mx-auto mt-2">
+        <h3 class="text-lg font-bold mb-2">Список чатов</h3>
+        <ul id="chatList" class="list-none p-6 border rounded w-2/3"></ul>
+    </div>
+</div>
+<script>
+    // Отображение списка чатов
+    async function displayChatList() {
+        const token = "rXmdWsHzsAN4SMoI6AejNZYg5RT7tAhQTb0qo7Nj-4o";
+        const chatListUrl = 'http://localhost:8000/chats';  // Замените на ваш эндпоинт
+        const chatListResponse = await fetch(chatListUrl, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const chatListData = await chatListResponse.json();
+
+        const chatListElement = document.getElementById('chatList');
+        chatListData.forEach(chat => {
+            const timestamp = chat.last_message ? new Date(chat.last_message.timestamp) : null;
+            const formattedTimestamp = timestamp ? timestamp.toLocaleString("ru-RU") : '';
+            const content = chat.last_message ? chat.last_message.content : "Сообщений нет";
+            const isread = chat.last_message ? chat.last_message.is_read : false;
+
+            const img_name = chat.other_user_image;
+
+            const chatItem = document.createElement('li');
+            chatItem.innerHTML = `
+                <div class="flex items-center mb-2 justify-between">
+                    <div class="flex items-center">
+
+                        <img src="{url_for('static', {'path': 'images/' + img_name})}" alt="Фото" class="w-10 h-10 rounded-full mr-2">
+                        <p>${img_name}</p>
+
+                        <div>
+                            <h4 class="font-bold">${chat.other_user_name}</h4>
+                            <p>${content}</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col text-right">
+                        <small>${formattedTimestamp}</small>
+                        ${isread ? '<span class="text-green-500">✓✓</span>' : '<span class="text-gray-500">✓</span>'}
+                    </div>
+                </div>
+            `;
+            chatListElement.appendChild(chatItem);
+        });
+        
+    }
+
+    // Загрузка списка чатов при загрузке страницы
+    window.onload = function () {
+        displayChatList();
+    }
+
+</script>
+{% endblock %}

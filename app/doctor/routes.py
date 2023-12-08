@@ -10,7 +10,7 @@ from app.patient.schemas import SPatientRead
 from app.user.model import User
 
 router = SQLAlchemyCRUDRouter(
-    prefix="/doctor",
+    prefix="/doctors",
     tags=["Doctor"],
     db_model=Doctor,
     schema=SDoctor, 

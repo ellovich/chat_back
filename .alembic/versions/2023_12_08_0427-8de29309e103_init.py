@@ -1,8 +1,8 @@
 """init
 
-Revision ID: e2519cb0ecbd
+Revision ID: 8de29309e103
 Revises: 
-Create Date: 2023-12-07 15:24:23.679970
+Create Date: 2023-12-08 04:27:14.805798
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e2519cb0ecbd'
+revision: str = '8de29309e103'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,6 +28,7 @@ def upgrade() -> None:
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('is_superuser', sa.Boolean(), nullable=False),
     sa.Column('is_verified', sa.Boolean(), nullable=False),
+    sa.Column('name', sa.String(), nullable=True),
     sa.Column('phone_number', sa.String(), nullable=True),
     sa.Column('image_path', sa.String(), nullable=True),
     sa.Column('type', sa.String(), nullable=True),
@@ -37,17 +38,25 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=True)
     op.create_index(op.f('ix_user_id'), 'user', ['id'], unique=True)
-    op.create_table('accesstoken',
+    op.create_table('access_token',
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('token', sa.String(length=43), nullable=False),
     sa.Column('created_at', fastapi_users_db_sqlalchemy.generics.TIMESTAMPAware(timezone=True), nullable=False),
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='cascade'),
-    sa.PrimaryKeyConstraint('token', 'id')
+    sa.PrimaryKeyConstraint('token')
     )
-    op.create_index(op.f('ix_accesstoken_created_at'), 'accesstoken', ['created_at'], unique=False)
-    op.create_index(op.f('ix_accesstoken_id'), 'accesstoken', ['id'], unique=True)
+    op.create_index(op.f('ix_access_token_created_at'), 'access_token', ['created_at'], unique=False)
+    op.create_table('chat',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user1_id', sa.Integer(), nullable=True),
+    sa.Column('user2_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['user1_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['user2_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_chat_id'), 'chat', ['id'], unique=True)
     op.create_table('doctor',
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('first_name', sa.String(), nullable=True),
     sa.Column('middle_name', sa.String(), nullable=True),
@@ -56,7 +65,6 @@ def upgrade() -> None:
     sa.Column('birth', sa.Date(), nullable=True),
     sa.Column('medical_institution', sa.String(), nullable=True),
     sa.Column('jobTitle', sa.String(), nullable=True),
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_on', sa.DateTime(), nullable=True),
     sa.Column('updated_on', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
@@ -65,10 +73,10 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_doctor_id'), 'doctor', ['id'], unique=True)
     op.create_table('patient',
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('gender', sa.String(length=1), nullable=True),
     sa.Column('birth_date', sa.Date(), nullable=True),
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_on', sa.DateTime(), nullable=True),
     sa.Column('updated_on', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
@@ -76,15 +84,6 @@ def upgrade() -> None:
     sa.UniqueConstraint('user_id')
     )
     op.create_index(op.f('ix_patient_id'), 'patient', ['id'], unique=True)
-    op.create_table('chat',
-    sa.Column('doctor_user_id', sa.Integer(), nullable=True),
-    sa.Column('patient_user_id', sa.Integer(), nullable=True),
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['doctor_user_id'], ['doctor.user_id'], ),
-    sa.ForeignKeyConstraint(['patient_user_id'], ['patient.user_id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_chat_id'), 'chat', ['id'], unique=True)
     op.create_table('message',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('content', sa.String(), nullable=False),
@@ -95,15 +94,16 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['chat_id'], ['chat.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_message_id'), 'message', ['id'], unique=False)
+    op.create_index(op.f('ix_message_id'), 'message', ['id'], unique=True)
     op.create_table('attachment',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('file_path', sa.String(), nullable=False),
     sa.Column('message_id', sa.Integer(), nullable=True),
+    sa.Column('type', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['message_id'], ['message.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_attachment_id'), 'attachment', ['id'], unique=False)
+    op.create_index(op.f('ix_attachment_id'), 'attachment', ['id'], unique=True)
     # ### end Alembic commands ###
 
 
@@ -113,15 +113,14 @@ def downgrade() -> None:
     op.drop_table('attachment')
     op.drop_index(op.f('ix_message_id'), table_name='message')
     op.drop_table('message')
-    op.drop_index(op.f('ix_chat_id'), table_name='chat')
-    op.drop_table('chat')
     op.drop_index(op.f('ix_patient_id'), table_name='patient')
     op.drop_table('patient')
     op.drop_index(op.f('ix_doctor_id'), table_name='doctor')
     op.drop_table('doctor')
-    op.drop_index(op.f('ix_accesstoken_id'), table_name='accesstoken')
-    op.drop_index(op.f('ix_accesstoken_created_at'), table_name='accesstoken')
-    op.drop_table('accesstoken')
+    op.drop_index(op.f('ix_chat_id'), table_name='chat')
+    op.drop_table('chat')
+    op.drop_index(op.f('ix_access_token_created_at'), table_name='access_token')
+    op.drop_table('access_token')
     op.drop_index(op.f('ix_user_id'), table_name='user')
     op.drop_index(op.f('ix_user_email'), table_name='user')
     op.drop_table('user')

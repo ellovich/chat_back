@@ -1,4 +1,4 @@
-from app.chat.model import Chat, Message
+from app.chat.model import Attachment, Chat, Message
 from app.doctor.model import Doctor
 from app.patient.model import Patient
 from app.user.model import AccessToken, User
@@ -6,7 +6,7 @@ from sqladmin import ModelView
 
 
 class UsersAdmin(ModelView, model=User):
-    column_list = [User.id, User.email, User.access_tokens]
+    column_list = [User.id, User.email, User.name, User.access_tokens]
     column_details_exclude_list = [User.hashed_password]
     can_delete = False
     name = "Пользователь"
@@ -15,7 +15,7 @@ class UsersAdmin(ModelView, model=User):
 
 
 class AccessTokenAdmin(ModelView, model=AccessToken):
-    column_list = [AccessToken.id, AccessToken.user, AccessToken.token, AccessToken.created_at]
+    column_list = [AccessToken.user, AccessToken.token, AccessToken.created_at]
     name = "Токен"
     name_plural = "Токены"
     icon = "fa-solid fa-key"
@@ -38,7 +38,7 @@ class DoctorsAdmin(ModelView, model=Doctor):
 
 
 class ChatsAdmin(ModelView, model=Chat):
-    column_list = [Chat.id, Chat.doctor, Chat.patient, Chat.messages]
+    column_list = [Chat.id, Chat.user1, Chat.user2, Chat.messages]
     name = "Чат"
     name_plural = "Чаты"
     icon = "fa-solid fa-comments"
@@ -49,3 +49,10 @@ class MessagesAdmin(ModelView, model=Message):
     name = "Сообщение"
     name_plural = "Сообщения"
     icon = "fa-solid fa-comment"
+
+
+class AttachmentsAdmin(ModelView, model=Attachment):
+    column_list = [Attachment.id, Attachment.type, Attachment.message, Attachment.file_path]
+    name = "Вложение"
+    name_plural = "Вложения"
+    icon = "fa-solid fa-paperclip"

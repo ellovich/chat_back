@@ -9,13 +9,16 @@ class Chat(BaseAlchemyModel):
     __tablename__ = 'chat'
     id = Column(Integer, primary_key=True, nullable=False, index=True, unique=True)
 
-    doctor_user_id = Column(Integer, ForeignKey('doctor.user_id'))
-    doctor = relationship('Doctor', back_populates='chat')
+    user1_id = Column(Integer, ForeignKey('user.id'))
+    user1 = relationship('User', foreign_keys=[user1_id])
 
-    patient_user_id = Column(Integer, ForeignKey('patient.user_id'))
-    patient = relationship('Patient', back_populates='chat')
+    user2_id = Column(Integer, ForeignKey('user.id'))
+    user2 = relationship('User', foreign_keys=[user2_id])
 
-    messages = relationship('Message', back_populates='chat')
+    messages = relationship('Message', back_populates='chat', cascade='all, delete-orphan')
+
+    def __str__(self) -> str:
+        return f"C#{self.id}<(u#{self.user1_id}<->u#{self.user2_id})>"
 
 
 class Message(BaseAlchemyModel):
@@ -32,7 +35,7 @@ class Message(BaseAlchemyModel):
     sender_id = Column(Integer, nullable=False)
     sender = relationship('User', foreign_keys=[sender_id], primaryjoin='User.id == Message.sender_id')
 
-    attachments = relationship('Attachment', back_populates='message')
+    attachments = relationship('Attachment', back_populates='message', cascade='all, delete-orphan')
 
     def as_dict(self):
         return {
@@ -44,6 +47,9 @@ class Message(BaseAlchemyModel):
             'attachments': [attachment.file_path for attachment in self.attachments]
         }
     
+    def __str__(self) -> str:
+        return f"M#{self.id}<(u#{self.sender_id})>"
+    
 
 class Attachment(BaseAlchemyModel):
     __tablename__ = 'attachment'
@@ -52,4 +58,6 @@ class Attachment(BaseAlchemyModel):
     file_path = Column(String, nullable=False)
     message_id = Column(Integer, ForeignKey('message.id'))
     message = relationship('Message', back_populates='attachments')
+
+    type = Column(String, nullable=False, default="image")
 

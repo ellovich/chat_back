@@ -13,7 +13,6 @@ class Doctor(BaseAlchemyModel, MainModel):
 
     user_id = Column(Integer, ForeignKey('user.id'), unique=True)
     user = relationship('User', foreign_keys=[user_id], primaryjoin='User.id == Doctor.user_id')
-    chat = relationship("Chat", back_populates=__tablename__)
     
     first_name = Column(String, nullable=True)
     middle_name = Column(String, nullable=True)

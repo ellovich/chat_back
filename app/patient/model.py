@@ -11,7 +11,6 @@ class Patient(BaseAlchemyModel, MainModel):
 
     user_id = Column(Integer, ForeignKey('user.id'), unique=True)
     user = relationship('User', foreign_keys=[user_id], primaryjoin='User.id == Patient.user_id')
-    chat = relationship("Chat", back_populates=__tablename__)
    
     gender: Mapped[String] = mapped_column(String(1), nullable=True)    
     birth_date: Mapped[Date] = mapped_column(Date, nullable=True)    

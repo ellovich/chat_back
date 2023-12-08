@@ -1,55 +1,66 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="bg-gray-100 flex items-center justify-center h-screen">
+<div class="bg-gray-100 h-screen flex flex-col items-center justify-center">
     <div class="bg-white rounded-lg shadow p-6 w-full md:w-1/2 lg:w-1/3">
-        <h1 class="text-3xl font-bold mb-4">WebSocket Chat</h1>
-        <h2 class="text-lg mb-6">Your ID: <span id="ws-id"></span></h2>
-        <form action="" onsubmit="sendMessage(event)" class="flex mb-6">
-            <input placeholder="Enter your message" type="text" id="messageText" class="flex-1 px-4 py-2 border rounded-l focus:outline-none focus:border-blue-500" autocomplete="off"/>
-            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-r">Send</button>
+        <h1 class="text-3xl font-bold mb-4">Чат</h1>
+        <h2 class="text-lg mb-6">Ваш ID: <span id="ws-id"></span></h2>
+        <ul id='messages' class="list-none p-4 border rounded overflow-auto max-h-60"></ul>
+        <form action="" onsubmit="sendMessage(event)" class="flex mt-4">
+            <input placeholder="Введите ваше сообщение" type="text" id="messageText" class="flex-1 px-4 py-2 border rounded-l focus:outline-none focus:border-blue-500" autocomplete="off"/>
+            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-r">Отправить</button>
         </form>
-        <ul id='messages' class="list-none p-4 border rounded"></ul>
     </div>
 </div>
 <script>
+    // WebSocket-подключение
+    let client_id = Date.now();
+    document.querySelector("#ws-id").textContent = client_id;
+    let ws = new WebSocket(`ws://localhost:8000/ws/${client_id}/recipient_id`); 
+
+    ws.onmessage = function (event) {
+        appendMessage(event.data);
+    };
+
+    function sendMessage(event) {
+        let input = document.getElementById("messageText");
+        let message = input.value.trim();
+        if (message !== '') {
+            ws.send(message);
+        }
+        input.value = '';
+        event.preventDefault();
+    }
+
     async function getLastMessages() {
-        const url = 'http://localhost:8000/chat/last_messages'
+        const url = 'http://localhost:8000/chats/4';
+        const token = "rXmdWsHzsAN4SMoI6AejNZYg5RT7tAhQTb0qo7Nj-4o";
+
         const response = await fetch(url, {
-            method: 'GET'
-        })
-        return response.json()
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.json();
     }
 
     getLastMessages()
         .then(messages => {
-            appendMessage("Последние 5 сообщений:")
             messages.forEach(msg => {
-                appendMessage(msg.message)
-            })
-            appendMessage("\nНовые сообщения:")
-        })
+                appendMessage(msg.content);
+            });
+        });
 
     function appendMessage(msg) {
-        let messages = document.getElementById('messages')
-        let message = document.createElement('li')
-        let content = document.createTextNode(msg)
-        message.appendChild(content)
-        messages.appendChild(message)
-    }
+        let messages = document.getElementById('messages');
+        let message = document.createElement('li');
+        message.className = 'mb-2';
+        let content = document.createTextNode(msg);
+        message.appendChild(content);
+        messages.appendChild(message);
 
-    let client_id = Date.now()
-    document.querySelector("#ws-id").textContent = client_id;
-    let ws = new WebSocket(`ws://localhost:8000/chat/ws/${client_id}`);
-    ws.onmessage = function (event) {
-        appendMessage(event.data)
-    };
-
-    function sendMessage(event) {
-        let input = document.getElementById("messageText")
-        ws.send(input.value)
-        input.value = ''
-        event.preventDefault()
+        // Прокрутка вниз, чтобы видеть последние сообщения
+        messages.scrollTop = messages.scrollHeight;
     }
 </script>
 {% endblock %}

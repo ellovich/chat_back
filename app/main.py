@@ -9,7 +9,7 @@ from redis import asyncio as aioredis
 from sqladmin import Admin
 import sentry_sdk
 
-from app.admin.views import ChatsAdmin, DoctorsAdmin, MessagesAdmin, PatientsAdmin, UsersAdmin, AccessTokenAdmin
+from app.admin.views import AttachmentsAdmin, ChatsAdmin, DoctorsAdmin, MessagesAdmin, PatientsAdmin, UsersAdmin, AccessTokenAdmin
 from app.chat.router import router as router_chats
 from app.config import settings
 from app.database import engine
@@ -96,6 +96,7 @@ admin.add_view(PatientsAdmin)
 admin.add_view(DoctorsAdmin)
 admin.add_view(ChatsAdmin)
 admin.add_view(MessagesAdmin)
+admin.add_view(AttachmentsAdmin)
 
 
 app.mount("/static", StaticFiles(directory="app/static"), "static")

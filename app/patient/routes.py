@@ -1,3 +1,4 @@
+from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from app.auth.auth import current_active_user, current_admin_user
@@ -9,8 +10,9 @@ from app.patient.model import Patient
 from app.patient.schemas import SPatientRead, SPatientCreate
 from app.user.model import User
 
+
 router = SQLAlchemyCRUDRouter(
-    prefix="/patient",
+    prefix="/patients",
     tags=["Patient"],
     db_model=Patient,
     schema=SPatientRead,
@@ -18,7 +20,3 @@ router = SQLAlchemyCRUDRouter(
     delete_one_route=[Depends(current_admin_user)],
     dependencies=[Depends(current_active_user)]
 )
-
-# @router.get("/{id}/doctors")
-# async def get_patinet_doctors(id: int) -> list[SDoctor]:
-#     return await PatientDAO.get_all_doctors(id)

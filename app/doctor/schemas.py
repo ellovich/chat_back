@@ -9,9 +9,6 @@ class SDoctor(BaseModel):
 
     id: int
     user_id: int
-    first_name: str | None
-    middle_name: str | None
-    last_name: str | None
 
     gender: str | None
     birth: date | None

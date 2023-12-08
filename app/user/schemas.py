@@ -15,6 +15,7 @@ class SUserCreate(schemas.BaseUserCreate):
     is_superuser: Optional[bool] = False
     is_verified: Optional[bool] = False
     type: Literal["patient", "doctor"]
+    name: Optional[str]
     phone_number: Optional[str]
     image_path: str | None
 
@@ -28,6 +29,7 @@ class SUserRead(schemas.BaseUser[int]):
     is_superuser: bool = False
     is_verified: bool = False
     type: str
+    name: Optional[str]
     phone_number: str
     image_path: str | None
 

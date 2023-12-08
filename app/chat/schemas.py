@@ -1,3 +1,4 @@
+from typing import Literal
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 
@@ -5,8 +6,8 @@ from datetime import datetime
 
 class SChatBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)  # type: ignore
-    doctor_user_id: int
-    patient_user_id: int
+    user1_id: int
+    user2_id: int
 
 class SChatCreate(SChatBase):
     pass
@@ -17,6 +18,22 @@ class SChatUpdate(BaseModel):
 class SChat(SChatBase):
     model_config = ConfigDict(from_attributes=True)  # type: ignore
     id: int
+
+
+# ATTACHMENT
+
+class SAttachmentBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)  # type: ignore
+    file_path: str
+
+class SAttachmentCreate(SAttachmentBase):
+    pass
+
+class SAttachment(SAttachmentBase):
+    model_config = ConfigDict(from_attributes=True)  # type: ignore
+    id: int
+    message_id: int
+    type: Literal["image", "doc"]
 
 
 # MESSAGE
@@ -42,21 +59,7 @@ class SMessage(SMessageBase):
     id: int
     chat_id: int
     sender_id: int
-    attachments: list[str] = []
-
-# ATTACHMENT
-
-class SAttachmentBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True)  # type: ignore
-    file_path: str
-
-class SAttachmentCreate(SAttachmentBase):
-    pass
-
-class SAttachment(SAttachmentBase):
-    model_config = ConfigDict(from_attributes=True)  # type: ignore
-    id: int
-    message_id: int
+    attachments: list[SAttachment] = []
 
 
 # CHAT LIST
@@ -65,6 +68,7 @@ class SChatForList(BaseModel):
     model_config = ConfigDict(from_attributes=True)  # type: ignore
     
     chat_id: int
-    doctor_id: int 
-    patient_id: int
-    last_message: SMessage
+    other_user_id: int
+    other_user_name: str | None
+    other_user_image: str | None
+    last_message: SMessage | None

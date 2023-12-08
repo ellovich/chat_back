@@ -7,6 +7,8 @@ from app.database import BaseAlchemyModel, MainModel
 
 
 class AccessToken(SQLAlchemyBaseAccessTokenTable[int], BaseAlchemyModel):
+    __tablename__ = "access_token"
+
     @declared_attr
     def user_id(cls) -> Mapped[int]:
         return mapped_column(Integer, ForeignKey("user.id", ondelete="cascade"), nullable=False)
@@ -27,8 +29,8 @@ class User(BaseAlchemyModel, MainModel):
     is_superuser = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     
+    name = Column(String, nullable=True)
     phone_number = Column(String, default=False, nullable=True)
-
     image_path = Column(String, nullable=True)
     
     type = Column(String)

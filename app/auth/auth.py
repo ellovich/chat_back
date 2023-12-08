@@ -8,7 +8,7 @@ from app.user.dependencies import get_access_token_db
 from app.user.model import AccessToken, User
 
 
-bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
+bearer_transport = BearerTransport(tokenUrl="auth/login")
 
 def get_database_strategy(
     access_token_db: AccessTokenDatabase[AccessToken] = Depends(get_access_token_db)
@@ -16,7 +16,7 @@ def get_database_strategy(
     return DatabaseStrategy(access_token_db, lifetime_seconds=360000)
 
 auth_backend = AuthenticationBackend(
-    name="jwt",
+    name="bearer",
     transport=bearer_transport,
     get_strategy=get_database_strategy,
 )

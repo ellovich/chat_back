@@ -1,6 +1,7 @@
 from typing import AsyncGenerator
 
 from fastapi import Depends
+from fastapi.security import OAuth2AuthorizationCodeBearer
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi_users_db_sqlalchemy.access_token import SQLAlchemyAccessTokenDatabase

@@ -10,7 +10,7 @@ from app.auth.auth import current_active_user
 
 router = APIRouter(
     prefix="/import",
-    tags=["Импорт данных в БД"],
+    tags=["DB Import"],
 )
 
 

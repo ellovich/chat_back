@@ -2,7 +2,8 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-from sqlalchemy import and_, desc, func, insert, or_, select
+from sqlalchemy.orm import joinedload
+from sqlalchemy import and_, desc, func, insert, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.chat.dao import ChatDAO, MessageDAO
 from app.logger import logger
@@ -12,64 +13,106 @@ from app.chat.schemas import SChatCreate, SChatForList, SMessageUpdate, SChatUpd
 from app.database import async_session_maker, get_async_session
 from app.doctor.dao import DoctorDAO
 from app.patient.dao import PatientDAO
-from app.auth.auth import current_active_user
+from app.auth.auth import current_active_user, current_admin_user
 from app.user.model import User
 
 
 router = APIRouter(
-    prefix="/chat", 
+    prefix="/chats", 
     tags=["Chat"]
 )
 
+@router.get("")
+async def get_my_chats_list(
+    current_user: User = Depends(current_active_user),
+) -> list[SChatForList]:
+    return await ChatDAO.get_chats_list_by_user_id(current_user.id)
 
-# чаты текущего пользователя
-@router.get("/user_chats")
-async def get_user_chats(
-    user: User = Depends(current_active_user)
-    ) -> list[SChatForList]:
 
-    try:
-        doctor = await DoctorDAO.find_one_or_none(user_id = user.id)
-        patient = await PatientDAO.find_one_or_none(user_id = user.id)
-        
-        if doctor:
-            ChatDAO.get_chats_by_user(user_id = doctor.id)
-        elif patient:
-            ChatDAO.get_chats_by_user(user_id = patient.id)
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# создание чата
 @router.post("")
-async def create_chat(chat: SChatCreate):
-    doctor = await DoctorDAO.get_one_or_none(id = chat.doctor_id)
-    patient = await PatientDAO.get_one_or_none(id = chat.patient_id)
+async def create_chat(
+    other_user_id: int,
+    current_user: User = Depends(current_active_user),
+):
+    async with async_session_maker() as session:
+        # Убедимся, что указанный пользователь существует
+        other_user = await session.get(User, other_user_id)
+        if not other_user:
+            raise HTTPException(status_code=404, detail="Пользователь с указанным ID не найден.")
 
-    if not doctor or not patient:
-        return HTTPException(404, detail="Doctor or Patient not found")
+        # Убедимся, что текущий пользователь и указанный пользователь различны
+        if current_user.id == other_user.id:
+            raise HTTPException(status_code=400, detail="Нельзя создать чат с самим собой.")
 
-    exist_chat = await ChatDAO.find_one_or_none(doctor_id = doctor.id, patient_id = patient.id)
-    if exist_chat:
-        return HTTPException(409, detail="Chat already exists")
+        existing_chat = await ChatDAO.chat_exists(current_user.id, other_user.id)
+        if existing_chat:
+            raise HTTPException(status_code=400, detail="Чат уже существует между указанными пользователями.")
 
-    new_chat = await ChatDAO.create(obj_in=chat)
-    return new_chat.id
+        # Создадим новый чат
+        new_chat = Chat(user1_id=current_user.id, user2_id=other_user.id)
+        session.add(new_chat)
+        await session.commit()
 
-# создание сообщения
-@router.post("/create_message")
-async def create_message(message: SMessage):
-    chat = await ChatDAO.get_one_or_none(id = message.chat_id)
-    if not chat:
-        return HTTPException(404, detail="Chat not found")
+        return {
+            "chat_id": new_chat.id,
+            "user1_id": new_chat.user1_id,
+            "user2_id": new_chat.user2_id,
+        }
+
+
+@router.delete("")
+async def delete_all(user: User = Depends(current_admin_user)):
+    await ChatDAO.delete_all()
+    return {"message": "Все чаты удалены"}
+
+
+@router.get("/{id}")
+async def get_my_chat_messages(
+    id: int,
+    current_user: User = Depends(current_active_user),
+    count: int = 20,
+) -> list[SMessage]:
     
-    new_message = await MessageDAO.create(obj_in=message)
-    return new_message.id
+    # Проверяем, существует ли чат
+    exist_chat = await ChatDAO.get_one_or_none(id=id)
+    if not exist_chat:
+        raise HTTPException(404, detail="Чат не найден")
+    
+    # Проверяем, что текущий пользователь участвует в чате
+    if current_user.id not in (exist_chat.user1_id, exist_chat.user2_id):
+        raise HTTPException(403, detail="Нет прав на удаление этого чата")
 
-# прочитывание всех сообщений чата
-@router.post("/{chat_id}/read")
-async def read_chat(chat_id: int):
-    messages = await MessageDAO.get_multi(chat_id = chat_id)
+    return await ChatDAO.get_massages(id, count)
+
+
+@router.delete("/{id}")
+async def delete_one_my(id: int, current_user: User = Depends(current_active_user)):
+    # Проверяем, существует ли чат
+    exist_chat = await ChatDAO.get_one_or_none(id=id)
+    if not exist_chat:
+        raise HTTPException(404, detail="Чат не найден")
+    
+    # Проверяем, что текущий пользователь участвует в чате
+    if current_user.id not in (exist_chat.user1_id, exist_chat.user2_id):
+        raise HTTPException(403, detail="Нет прав на удаление этого чата")
+
+    await ChatDAO.delete(id=id)
+
+    return {"message": "Чат удален"}
+
+
+@router.put("/{id}/read")
+async def read_chat(id: int, current_user: User = Depends(current_active_user)):    
+    # Проверяем, существует ли чат
+    exist_chat = await ChatDAO.get_one_or_none(id=id)
+    if not exist_chat:
+        raise HTTPException(404, detail="Чат не найден")
+    
+    # Проверяем, что текущий пользователь участвует в чате
+    if current_user.id not in (exist_chat.user1_id, exist_chat.user2_id):
+        raise HTTPException(403, detail="Нет прав на удаление этого чата")
+
+    messages = await ChatDAO.get_massages(chat_id = id)
     for m in messages:
         new_message = m
         new_message.is_read = True
@@ -77,28 +120,18 @@ async def read_chat(chat_id: int):
             obj_current=m,
             obj_in=new_message
         )
+    return {"message": "Сообщение прочитаны"}
 
-# прочитывание сообщения
-@router.put("/read_message")
-async def read_message(message_id: int):
-    message = await MessageDAO.get_one_or_none(id = message_id)
-    if not message:
-        return HTTPException(404, detail="Message not found")
-    
-    new_message = message
-    new_message.is_read = True
-    await MessageDAO.update(
-        obj_current=message,
-        obj_in=new_message
-    )
 
-# удаление чата
-@router.delete("/{chat_id}")
-async def delete_chat(chat_id: int):
-    exist_chat = await ChatDAO.get_one_or_none(id = chat_id)
-    if not exist_chat:
-        return HTTPException(404, detail="Chat not found")
-    await ChatDAO.delete(chat_id)
+
+
+
+
+
+
+
+
+
 
 
 
@@ -121,31 +154,26 @@ class ConnectionManager:
             await self.add_message_to_database(message, sender_id, recipient_id)
 
         for connection in self.active_connections:
-            await connection.send_text(message)
+            if recipient_id == connection.scope.get("user_id"):
+                await self.send_personal_message(message, connection)
 
     @staticmethod
     async def add_message_to_database(message: str, sender_id: int, recipient_id: int):
         async with async_session_maker() as session:
-            chat = await session.execute(select(Chat).filter_by(doctor_id=sender_id, patient_id=recipient_id)).scalar()
-            if chat is None:
-                chat = Chat(doctor_id=sender_id, patient_id=recipient_id)
+            chat = await ChatDAO.chat_exists(sender_id, recipient_id)
+            if not chat:
+                chat = Chat(user1_id=sender_id, user2_id=recipient_id)
                 session.add(chat)
                 await session.flush()
 
+            # Создаем новое сообщение
             new_message = Message(content=message, sender_id=sender_id, chat=chat)
             session.add(new_message)
             await session.commit()
 
-manager = ConnectionManager()
 
-@router.get("/{chat_id}/last_messages")
-async def get_last_messages(
-    chat_id: int,
-    session: AsyncSession = Depends(get_async_session),
-) -> List[SMessage]:
-    query = select(Message).where(Message.chat_id==chat_id).order_by(Message.id.desc()).limit(25)
-    messages = await session.execute(query)
-    return messages.scalars().all()
+
+manager = ConnectionManager()
 
 @router.websocket("/ws/{client_id}/{recipient_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: int, recipient_id: int):
@@ -153,15 +181,37 @@ async def websocket_endpoint(websocket: WebSocket, client_id: int, recipient_id:
     try:
         while True:
             data = await websocket.receive_text()
-            await manager.broadcast(
+            await manager.send_personal_message(
                 f"User #{client_id} says: {data}",
-                sender_id=client_id,
-                recipient_id=recipient_id
+                websocket
             )
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        await manager.broadcast(
+        await manager.send_personal_message(
             f"User #{client_id} left the chat",
-            sender_id=client_id,
-            recipient_id=recipient_id
+            websocket
         )
+
+
+
+
+connected_users = {}
+
+@router.websocket("/ws/{user_id}")
+async def websocket_endpoint(user_id: str, websocket: WebSocket):
+    await websocket.accept()
+
+    # Store the WebSocket connection in the dictionary
+    connected_users[user_id] = websocket
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Send the received data to the other user
+            for user, user_ws in connected_users.items():
+                if user != user_id:
+                    await user_ws.send_text(data)
+    except:
+        # If a user disconnects, remove them from the dictionary
+        del connected_users[user_id]
+        await websocket.close()
