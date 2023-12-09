@@ -70,7 +70,7 @@ async def delete_all(user: User = Depends(current_admin_user)):
 async def get_my_chat_messages(
     id: int,
     current_user: User = Depends(current_active_user),
-    count: int = 20,
+    count: int = 2000,
 ) -> list[SMessage]:
     
     # Проверяем, существует ли чат

@@ -112,16 +112,18 @@ async def add_process_time_header(request: Request, call_next):
 
 from app.chat.ws_router import ws_manager
 
-@app.websocket("/{chat_id}/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, chat_id: int, client_id: int):
-    await ws_manager.connect(websocket, client_id=client_id)
+@app.websocket("/ws/{chat_id}")
+async def websocket_endpoint(websocket: WebSocket, chat_id: int):
+    await ws_manager.connect(websocket, client_id=chat_id)
     try:
         while True:
             message_text = await websocket.receive_text()
             message_data = json.loads(message_text)
-            await ws_manager.broadcast(client_id = client_id, 
+            await ws_manager.broadcast(chat_id= chat_id, 
                                        message_data=message_data, 
                                        add_to_db=True)
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
-        await ws_manager.broadcast(-1, -1, f"Client #{client_id} left the chat", False)
+        await ws_manager.broadcast(chat_id= chat_id,  
+                                   message_data={},
+                                   add_to_db=False)

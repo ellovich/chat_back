@@ -3,10 +3,9 @@
 {% block content %}
 
 <div class="bg-gray-100 h-screen flex flex-col items-center justify-center">
-    <div class="bg-white rounded-lg shadow p-6 w-full md:w-1/2 lg:w-1/3">
-        <h1 class="text-3xl font-bold mb-4">Чат {{chat_id}}</h1>
-        <h2 class="text-lg mb-6">Ваш ID: <span id="ws-id">{{ chat_id }}</span></h2>
-        <ul id='messages' class="list-none p-4 border rounded overflow-auto max-h-60"></ul>
+    <div class="bg-white rounded-lg shadow p-6 w-full md:w-2/3 lg:w-2/3">
+        <h1 id="ws-id" class="text-3xl font-bold mb-4">Чат {{chat_id}}</h1>
+        <ul id='messages' class="list-none p-4 border rounded overflow-auto max-h-80"></ul>
         <form action="" onsubmit="sendMessage(event)" class="flex mt-4">
             <input placeholder="Введите ваше сообщение" type="text" id="messageText" class="flex-1 px-4 py-2 border rounded-l focus:outline-none focus:border-blue-500" autocomplete="off"/>
             <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-r">Отправить</button>
@@ -16,24 +15,34 @@
 
 <script>
 
-    let sender_id = 6
+    let sender_id = 5
     let chat_id = 4
-    let client_id = Date.now()
+    let client_id = chat_id
     document.querySelector("#ws-id").textContent = client_id;
-    var ws = new WebSocket(`ws://localhost:8000/${chat_id}/ws/${client_id}`);
+    var ws = new WebSocket(`ws://localhost:8000/ws/${chat_id}`);
 
     ws.onmessage = function (event) {
-        appendMessage(event.data)
+        let msg = JSON.parse(event.data)
+        appendMessage(msg)
     };
 
     function sendMessage(event) {
         let input = document.getElementById("messageText");
         let message = input.value.trim();
+
+        let currentDate = new Date();
+        let formattedDate = currentDate.toISOString().replace("Z", ""); // Возвращает дату в формате "2023-12-09T14:52:09.967565"
+
+
         if (message !== '') {
             ws.send(JSON.stringify({
+                attachments: [],
                 chat_id: chat_id,
-                sender_id: sender_id,
                 content: message,
+                id: 1,
+                is_read: false,
+                sender_id: sender_id,
+                timestamp: formattedDate,
             }));
         }
         input.value = '';
@@ -42,7 +51,7 @@
 
     async function getLastMessages() {
         const url = 'http://localhost:8000/chats/' + chat_id;
-        const token = "U6-ssAlSIhRvj8IGL3J_z_5gRscqvcThYEsM64JRbTI";
+        const token = "hYUjyWhWl2VrZsklI7Zf4lRH7cMZ3VOadWTYFVc96rI";
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -61,6 +70,7 @@
 
 
     function appendMessage(msg) {
+    
         let messages = document.getElementById('messages');
         let message = document.createElement('li'); message.className = 'mb-2';
         
@@ -70,7 +80,7 @@
         
         let senderInfo = document.createElement('div');
         senderInfo.className = 'text-gray-500 text-sm';
-        senderInfo.textContent = `Sent by User#${msg.sender_id} at ${msg.timestamp}`;
+        senderInfo.textContent = `User #${msg.sender_id} at ${msg.timestamp}`;
         message.appendChild(senderInfo);
 
         messages.appendChild(message);

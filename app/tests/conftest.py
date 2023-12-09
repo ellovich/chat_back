@@ -30,10 +30,12 @@ async def prepare_database():
         with open(f"app/tests/mock_{model}.json", encoding="utf-8") as file:
             return json.load(file)
 
-    hotels = open_mock_json("hotels")
-    rooms = open_mock_json("rooms")
-    users = open_mock_json("users")
+    hotels = open_mock_json("user")
+    doctor = open_mock_json("doctor")
+    patient = open_mock_json("patient")
     chat = open_mock_json("chat")
+    message = open_mock_json("message")
+    attachment = open_mock_json("attachment")
 
     for chat in chat:
         # SQLAlchemy не принимает дату в текстовом формате, поэтому форматируем к datetime

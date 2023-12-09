@@ -11,30 +11,6 @@ from fastapi.responses import HTMLResponse
 
 class ConnectionManager:
     def __init__(self):
-        self.active_connections = []
-
-    async def connect(self, websocket: WebSocket, client_id: int):
-        await websocket.accept()
-        self.active_connections.append({"websocket": websocket, "client_id": client_id})
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections = [conn for conn in self.active_connections if conn["websocket"] != websocket]
-
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
-
-    async def broadcast(self, room_id: int, message: str):
-        for connection in self.active_connections:
-            if connection["client_id"] == room_id:
-                await connection["websocket"].send_text(message)
-
-
-
-
-
-
-class ConnectionManager:
-    def __init__(self):
         self.active_connections: list[WebSocket] = []
 
     async def connect(self, websocket: WebSocket, client_id: int):
@@ -47,11 +23,10 @@ class ConnectionManager:
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
 
-    async def broadcast(self, client_id: int, message_data: dict, add_to_db: bool = True):
+    async def broadcast(self, chat_id: int, message_data: dict, add_to_db: bool = True):
         for connection in self.active_connections:
-            if connection["client_id"] == client_id:
+            if connection["client_id"] == chat_id:
                 await connection["websocket"].send_text(json.dumps(message_data))
-        logger.warning(message_data)
         if add_to_db:
             await self.add_message_to_database(message_data["chat_id"], message_data["sender_id"], message_data["content"])
 
