@@ -1,3 +1,4 @@
+import json
 import time
 from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
@@ -111,18 +112,16 @@ async def add_process_time_header(request: Request, call_next):
 
 from app.chat.ws_router import ws_manager
 
-@app.websocket("/ws/{client_id}")
-async def websocket_endpoint(websocket: WebSocket, client_id: int):
-    await ws_manager.connect(websocket)
+@app.websocket("/{chat_id}/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, chat_id: int, client_id: int):
+    await ws_manager.connect(websocket, client_id=client_id)
     try:
         while True:
-            content = await websocket.receive_text()
-            await ws_manager.broadcast(
-                chat_id=4,
-                sender_id=6,
-                content=content,
-                add_to_db=True
-            )
+            message_text = await websocket.receive_text()
+            message_data = json.loads(message_text)
+            await ws_manager.broadcast(client_id = client_id, 
+                                       message_data=message_data, 
+                                       add_to_db=True)
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
         await ws_manager.broadcast(-1, -1, f"Client #{client_id} left the chat", False)

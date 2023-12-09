@@ -13,12 +13,14 @@
         </form>
     </div>
 </div>
+
 <script>
 
+    let sender_id = 6
     let chat_id = 4
     let client_id = Date.now()
     document.querySelector("#ws-id").textContent = client_id;
-    var ws = new WebSocket(`ws://localhost:8000/ws/${client_id}`);
+    var ws = new WebSocket(`ws://localhost:8000/${chat_id}/ws/${client_id}`);
 
     ws.onmessage = function (event) {
         appendMessage(event.data)
@@ -28,7 +30,11 @@
         let input = document.getElementById("messageText");
         let message = input.value.trim();
         if (message !== '') {
-            ws.send(message);
+            ws.send(JSON.stringify({
+                chat_id: chat_id,
+                sender_id: sender_id,
+                content: message,
+            }));
         }
         input.value = '';
         event.preventDefault();
@@ -42,8 +48,6 @@
                 'Authorization': `Bearer ${token}`
             }
         });
-        console.log(chat_id)
-        console.log(token)
 
         return response.json();
     }
@@ -51,21 +55,30 @@
     getLastMessages()
         .then(messages => {
             messages.forEach(msg => {
-                appendMessage(msg.content);
+                appendMessage(msg);
             });
         });
 
+
     function appendMessage(msg) {
         let messages = document.getElementById('messages');
-        let message = document.createElement('li');
-        message.className = 'mb-2';
-        let content = document.createTextNode(msg);
+        let message = document.createElement('li'); message.className = 'mb-2';
+        
+        let content = document.createElement('div');
+        content.textContent = msg.content;
         message.appendChild(content);
+        
+        let senderInfo = document.createElement('div');
+        senderInfo.className = 'text-gray-500 text-sm';
+        senderInfo.textContent = `Sent by User#${msg.sender_id} at ${msg.timestamp}`;
+        message.appendChild(senderInfo);
+
         messages.appendChild(message);
 
         // Прокрутка вниз, чтобы видеть последние сообщения
         messages.scrollTop = messages.scrollHeight;
     }
+
 </script>
 
 {% endblock %}
