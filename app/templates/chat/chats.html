@@ -10,7 +10,7 @@
 <script>
     // Отображение списка чатов
     async function displayChatList() {
-        const token = "NxMymoQsrZ7YMmpXrYKbRffeQ5MLf3YRzAnLIEPGc2Y";
+        const token = "U6-ssAlSIhRvj8IGL3J_z_5gRscqvcThYEsM64JRbTI";
         const chatListUrl = 'http://localhost:8000/chats';  // Замените на ваш эндпоинт
         const chatListResponse = await fetch(chatListUrl, {
             headers: {
@@ -51,7 +51,7 @@
             // Добавление обработчика клика на элемент чата
             chatItem.addEventListener('click', () => {
                 // Переход на страницу чата с использованием id чата
-                window.location.href = `http://localhost:8000/pages/chat/${chat_id}`;
+                window.location.href = `http://localhost:8000/pages/chats/${chat_id}`;
             });
 
             chatListElement.appendChild(chatItem);

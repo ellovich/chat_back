@@ -1,6 +1,6 @@
 import time
 from fastapi.staticfiles import StaticFiles
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
@@ -10,10 +10,11 @@ from sqladmin import Admin
 import sentry_sdk
 
 from app.admin.views import AttachmentsAdmin, ChatsAdmin, DoctorsAdmin, MessagesAdmin, PatientsAdmin, UsersAdmin, AccessTokenAdmin
-from app.chat.router import router as router_chats
 from app.config import settings
 from app.database import engine
+
 from app.images.router import router as router_images
+from app.chat.router import router as router_chats
 from app.importer.router import router as router_import
 from app.doctor.routes import router as router_doctor
 from app.patient.routes import router as router_patient
@@ -21,6 +22,7 @@ from app.logger import logger
 from app.pages.router import router as router_pages
 from app.prometheus.router import router as router_prometheus
 from app.auth.routes import add_auth_routes
+
 
 app = FastAPI(
     title="МойДоктор",
@@ -43,6 +45,7 @@ add_auth_routes(app)
 app.include_router(router_doctor)
 app.include_router(router_patient)
 app.include_router(router_chats)
+#app.add_websocket_route("/chat", router_ws_chats)
 
 # Дополнительные роутеры
 app.include_router(router_images)
@@ -52,18 +55,10 @@ app.include_router(router_import)
 # Подключение CORS, чтобы запросы к API могли приходить из браузера 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-    # "http://localhost:3000",  # React.js
-    # "http://localhost:5713",  # React.js
-    "*"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
-    # allow_methods=["GET", "POST", "OPTIONS", "DELETE", "PATCH", "PUT"],
-    # allow_headers=["Content-Type", "Set-Cookie", "Access-Control-Allow-Headers", 
-    #                "Access-Control-Allow-Origin",
-    #                "Authorization"],
-    allow_methods=["*"], # Разрешить все HTTP-методы
-    allow_headers=["*"], # Разрешить все заголовки
+    allow_methods=["*"],
+    allow_headers=["*"], 
 )
 
 app.include_router(router_pages)
@@ -111,3 +106,23 @@ async def add_process_time_header(request: Request, call_next):
         "process_time": round(process_time, 4)
     })
     return response
+
+
+
+from app.chat.ws_router import ws_manager
+
+@app.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: int):
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            content = await websocket.receive_text()
+            await ws_manager.broadcast(
+                chat_id=4,
+                sender_id=6,
+                content=content,
+                add_to_db=True
+            )
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+        await ws_manager.broadcast(-1, -1, f"Client #{client_id} left the chat", False)

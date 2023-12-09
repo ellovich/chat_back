@@ -10,7 +10,7 @@ router = APIRouter(
 )
 
 @router.post("")
-async def add_image(name: int, file: UploadFile):
+async def add_image(name: str, file: UploadFile):
     im_path = f"app/static/images/{name}.webp"
     with open(im_path, "wb+") as file_object:
         # Сохраняем файл в локальное хранилище (на практике обычно сохраняется в удаленное хранилище)

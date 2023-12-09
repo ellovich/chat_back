@@ -1,10 +1,7 @@
-from datetime import date, datetime, timedelta
-
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from app.chat.router import router as chat_router
 from app.utils import format_number_thousand_separator, get_month_days
 
 router = APIRouter(
@@ -25,19 +22,16 @@ async def get_register_page(request: Request):
     return templates.TemplateResponse("auth/register.html", {"request": request})
 
 
-@router.get("/chat/{id}", response_class=HTMLResponse)
-async def get_chat_page(
-    id: int,
+@router.get("/chats", response_class=HTMLResponse)
+async def get_chats_page(
     request: Request,
-    #chat=Depends(get_chats),
 ):
     token = "SnobZjCORyiNoPlgUmT-kwEw1ecXqu-Ns44KjsYAhHU"
 
     return templates.TemplateResponse(
-        "chat/chat.html",
+        "chat/chats.html",
         {
             "request": request,
-            "chat_id": id,
             "headers": {
                 "Authorization": "Bearer ${token}"
             },
@@ -46,17 +40,18 @@ async def get_chat_page(
     )
 
 
-@router.get("/chats", response_class=HTMLResponse)
-async def get_chats_page(
+@router.get("/chats/{id}", response_class=HTMLResponse)
+async def get_chat_page(
+    id: int,
     request: Request,
-    #chat=Depends(get_chats),
 ):
     token = "SnobZjCORyiNoPlgUmT-kwEw1ecXqu-Ns44KjsYAhHU"
 
     return templates.TemplateResponse(
-        "chat/chats.html",
+        "chat/chat.html",
         {
             "request": request,
+            "chat_id": id,
             "headers": {
                 "Authorization": "Bearer ${token}"
             },
